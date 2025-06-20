@@ -1,27 +1,33 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
-import HomeSectionNotificacoes from './sections/notificacoes';
-import HomeSectionDialogs from './sections/dialogs';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import HomeStyles from './homeStyle';
-import HomeSectionComponents from "/imports/sysPages/pages/home/sections/componentTests";
-
 
 const Home: React.FC = () => {
-  const { Container, Header, } = HomeStyles;
+	const navigate = useNavigate();
+	const { Container, Header } = HomeStyles;
 
 	return (
 		<Container>
-      <Header>
-				<Typography variant="h3">Página de testes</Typography>
-				<Typography variant="body1" textAlign={'justify'}>
-					Bem vindo ao Boilerplate do Synergia. Essa é uma página dedicada aos testes e exibições de componentes e
-					funcionalidades do nosso sistema. Esperamos que você aproveite e aprenda bastante com ela. Para mais dúvidas
-					consulte nossa documentação oficial pelo storybook.
+			<Header>
+				<Typography variant="h3">Bem-vindo ao Sistema</Typography>
+				<Typography variant="body1" textAlign="justify">
+					Este é o início da sua jornada! Aqui você poderá gerenciar suas tarefas de forma simples e eficiente.
 				</Typography>
 			</Header>
-			<HomeSectionNotificacoes />
-			<HomeSectionDialogs />
-      <HomeSectionComponents />
+
+			<Box>
+				<Button
+					variant="contained"
+					startIcon={<SysIcon name="check" />}
+					onClick={() => navigate('/toDos')}
+				>
+					Minhas Tarefas
+				</Button>
+			</Box>
 		</Container>
 	);
 };
