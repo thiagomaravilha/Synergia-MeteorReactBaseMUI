@@ -3,6 +3,8 @@ import { Recurso } from '../config/recursos';
 import { toDosSch, IToDos } from './toDosSch';
 import { userprofileServerApi } from '/imports/modules/userprofile/api/userProfileServerApi';
 import { ProductServerBase } from '/imports/api/productServerBase';
+import { Meteor } from 'meteor/meteor';
+import { IContext } from '/imports/typings/IContext';
 // endregion
 
 class ToDosServerApi extends ProductServerBase<IToDos> {
@@ -74,40 +76,41 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
     );
   }
 
-  override async insert(doc: IToDos, userId: string) {
-    const _id = super.insert(doc, userId);
+  async serverInsert(doc: IToDos, context: IContext) {
+    const _id = await super.serverInsert(doc, context);
     return {
       status: 'success',
-      message: 'Tarefa criada com sucesso!',
+      message: 'Tarefa criada com sucesso! (Mensagem do Backend)',
       _id
     };
   }
 
-  override async update(doc: IToDos, userId: string) {
+  async serverUpdate(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });
 
-    if (task?.createdby !== userId) {
+    // LÓGICA DE PERMISSÃO CORRIGIDA
+    if (task?.createdby !== context.user._id && context.user.roles?.indexOf('Administrador') === -1) {
       throw new Meteor.Error('not-authorized', 'Você não tem permissão para editar esta tarefa.');
     }
 
-    super.update(doc, userId);
+    await super.serverUpdate(doc, context);
     return {
       status: 'success',
-      message: 'Tarefa atualizada com sucesso!'
+      message: 'Tarefa atualizada com sucesso! (Mensagem do Backend)'
     };
   }
 
-  override async remove(doc: IToDos, userId: string) {
+  async serverRemove(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });
 
-    if (task?.createdby !== userId) {
+    if (task?.createdby !== context.user._id && context.user.roles?.indexOf('Administrador') === -1) {
       throw new Meteor.Error('not-authorized', 'Você não tem permissão para excluir esta tarefa.');
     }
 
-    super.remove(doc, userId);
+    await super.serverRemove(doc, context);
     return {
       status: 'success',
-      message: 'Tarefa removida com sucesso!'
+      message: 'Tarefa removida com sucesso! (Mensagem do Backend)'
     };
   }
 }
