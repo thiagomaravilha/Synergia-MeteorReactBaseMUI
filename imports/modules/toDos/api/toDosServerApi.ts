@@ -88,8 +88,10 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
   async serverUpdate(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });
 
-    // LÓGICA DE PERMISSÃO CORRIGIDA
-    if (task?.createdby !== context.user._id && context.user.roles?.indexOf('Administrador') === -1) {
+    const isOwner = task?.createdby === context.user._id;
+    const isAdmin = context.user.roles?.includes('Administrador') ?? false;
+
+    if (!isOwner && !isAdmin) {
       throw new Meteor.Error('not-authorized', 'Você não tem permissão para editar esta tarefa.');
     }
 
@@ -103,7 +105,10 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
   async serverRemove(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });
 
-    if (task?.createdby !== context.user._id && context.user.roles?.indexOf('Administrador') === -1) {
+    const isOwner = task?.createdby === context.user._id;
+    const isAdmin = context.user.roles?.includes('Administrador') ?? false;
+
+    if (!isOwner && !isAdmin) {
       throw new Meteor.Error('not-authorized', 'Você não tem permissão para excluir esta tarefa.');
     }
 
@@ -112,7 +117,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       status: 'success',
       message: 'Tarefa removida com sucesso! (Mensagem do Backend)'
     };
-  }
+}
 }
 
 export const toDosServerApi = new ToDosServerApi();
