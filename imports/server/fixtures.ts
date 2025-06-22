@@ -36,9 +36,47 @@ async function createDefautUser() {
 	}
 }
 
+async function createTestUser() {
+  const existingUser = await Meteor.users.findOneAsync({ username: 'usuario_teste' });
+  if (!existingUser) {
+    const userId = await Accounts.createUserAsync({
+      username: 'usuario_teste',
+      email: 'usuario.teste@example.com',
+      password: '123456',
+    });
+
+    await Meteor.users.upsertAsync(
+      { _id: userId },
+      {
+        $set: {
+          'emails.0.verified': true,
+          profile: {
+            name: 'Usuário Teste',
+            email: 'usuario.teste@example.com'
+          },
+          roles: ['Usuario']
+        }
+      }
+    );
+
+    await userprofileServerApi.getCollectionInstance().insertAsync({
+      _id: userId,
+      username: 'usuario_teste',
+      email: 'usuario.teste@example.com',
+      roles: ['Usuario']
+    });
+
+    console.log('Usuário teste criado com sucesso:', userId);
+  } else {
+    console.log('Usuário teste já existe.');
+  }
+}
+
+
 // if the database is empty on server start, create some sample data.
 Meteor.startup(async () => {
 	console.log('fixtures Meteor.startup');
 	// Add default admin account
 	await createDefautUser();
+	await createTestUser();
 });
