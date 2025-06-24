@@ -10,6 +10,7 @@ import AppLayoutContext from '/imports/app/appLayoutProvider/appLayoutContext';
 type ScreenState = 'view' | 'edit' | 'create';
 
 interface IToDosListControllerContext {
+
   onAddButtonClick: () => void;
   onDeleteButtonClick: (row: IToDos) => void;
   onToggleCheck: (row: IToDos) => void;
@@ -21,6 +22,12 @@ interface IToDosListControllerContext {
   isModalOpen: boolean;
   todoList: IToDos[];
   loading: boolean;
+  searchInput: string;
+  hasSearched: boolean;
+  setSearchInput: (value: string) => void;
+  onSearch: () => void;
+  onClearSearch: () => void;
+  
 }
 
 export const ToDosListControllerContext = React.createContext<IToDosListControllerContext>(
@@ -31,16 +38,35 @@ const ToDosListController = () => {
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalState, setModalState] = useState<ScreenState>('view');
+  const [searchInput, setSearchInput] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [hasSearched, setHasSearched] = useState(false);
   const sysLayoutContext = useContext(AppLayoutContext);
-  
+
+
+
   const { loading, toDoss } = useTracker(() => {
-    const subHandle = toDosApi.subscribe('toDosList');
+    const filter = searchText ? { descricao: searchText } : {};
+    const subHandle = toDosApi.subscribe('toDosList', filter);
     const toDoss = subHandle?.ready() ? toDosApi.find({}).fetch() : [];
     return {
       toDoss,
       loading: !!subHandle && !subHandle.ready()
     };
+  }, [searchText]);
+
+  const onSearch = useCallback(() => {
+    setSearchText(searchInput.trim());
+    setHasSearched(true);
+  }, [searchInput]);
+
+
+  const onClearSearch = useCallback(() => {
+    setSearchText('');
+    setSearchInput('');
+    setHasSearched(false);
   }, []);
+
 
   const onAddButtonClick = useCallback(() => {
     const newDocumentId = nanoid();
@@ -103,9 +129,14 @@ const ToDosListController = () => {
       modalState,
       isModalOpen,
       todoList: toDoss,
-      loading
+      loading,
+      searchInput,
+      hasSearched,
+      setSearchInput,
+      onSearch,
+      onClearSearch
     }),
-    [toDoss, loading, selectedTaskId, isModalOpen, modalState, onDeleteButtonClick]
+    [toDoss, loading, selectedTaskId, isModalOpen, modalState, searchInput, hasSearched, onDeleteButtonClick, onSearch, onClearSearch]
   );
 
   return (

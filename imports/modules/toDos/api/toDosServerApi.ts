@@ -17,16 +17,19 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
     this.addTransformedPublication(
       'toDosList',
-      (filter = {}) => {
+      (filter: { descricao?: string } = {}) => {
         const userId = Meteor.userId();
 
-        const finalFilter = {
+        const finalFilter: any = {
           $or: [
             { isPersonal: { $ne: true } },
             ...(userId ? [{ createdby: userId }] : [])
-          ],
-          ...filter
+          ]
         };
+
+        if (filter?.descricao) {
+          finalFilter.descricao = { $regex: filter.descricao, $options: 'i' };
+        }
 
         return this.defaultListCollectionPublication(finalFilter, {
           projection: {
@@ -49,6 +52,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
         };
       }
     );
+
 
 
     this.addPublication('toDosDetail', (filter = {}, context: IContext) => {
