@@ -18,12 +18,23 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
     this.addTransformedPublication(
       'toDosList',
       (filter = {}) => {
-        return this.defaultListCollectionPublication(filter, {
+        const userId = Meteor.userId();
+
+        const finalFilter = {
+          $or: [
+            { isPersonal: { $ne: true } },
+            ...(userId ? [{ createdby: userId }] : [])
+          ],
+          ...filter
+        };
+
+        return this.defaultListCollectionPublication(finalFilter, {
           projection: {
             descricao: 1,
             concluido: 1,
             createdat: 1,
-            createdby: 1
+            createdby: 1,
+            isPersonal: 1
           }
         });
       },
@@ -39,16 +50,29 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       }
     );
 
-    this.addPublication('toDosDetail', (filter = {}) => {
-      return this.defaultDetailCollectionPublication(filter, {
+
+    this.addPublication('toDosDetail', (filter = {}, context: IContext) => {
+      const userId = context?.user?._id;
+
+      const finalFilter = {
+        $or: [
+          { isPersonal: { $ne: true } },
+          ...(userId ? [{ createdby: userId }] : [])
+        ],
+        ...filter
+      };
+
+      return this.defaultDetailCollectionPublication(finalFilter as Partial<IToDos>, {
         projection: {
           descricao: 1,
           concluido: 1,
           createdby: 1,
-          createdat: 1
+          createdat: 1,
+          isPersonal: 1
         }
       });
     });
+
 
     this.addRestEndpoint(
       'view',
@@ -77,6 +101,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
   }
 
   async serverInsert(doc: IToDos, context: IContext) {
+    doc.createdby = context.user._id;
     const _id = await super.serverInsert(doc, context);
     return {
       status: 'success',
@@ -117,7 +142,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       status: 'success',
       message: 'Tarefa removida com sucesso! (Mensagem do Backend)'
     };
-}
+  }
 }
 
 export const toDosServerApi = new ToDosServerApi();

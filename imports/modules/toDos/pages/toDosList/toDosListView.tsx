@@ -23,6 +23,8 @@ import ToDosListStyles from './toDosListStyles';
 import DeleteDialog from '/imports/ui/appComponents/showDialog/custom/deleteDialog/deleteDialog';
 import { ToDosModuleContext } from '../../toDosContainer';
 import ToDosDetailController from '../toDosDetail/toDosDetailController';
+import LockIcon from '@mui/icons-material/Lock';
+import Tooltip from '@mui/material/Tooltip';
 
 const ToDosListView = () => {
   const controller = React.useContext(ToDosListControllerContext);
@@ -96,12 +98,27 @@ const ToDosListView = () => {
               <AssignmentIcon />
             </ListItemIcon>
             <ListItemText
-              primary={task.descricao}
+              primary={
+                <Box display="flex" alignItems="center">
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      textDecoration: task.concluido ? 'line-through' : 'none',
+                      color: task.concluido ? 'gray' : 'inherit',
+                    }}
+                  >
+                    {task.descricao}
+                  </Typography>
+                  {task.isPersonal && (
+                    <Tooltip title="Tarefa pessoal">
+                      <LockIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
+                    </Tooltip>
+                  )}
+                </Box>
+              }
               secondary={`Criado por: ${task.nomeUsuario ?? 'Desconhecido'}`}
-              primaryTypographyProps={{
-                style: task.concluido ? { textDecoration: 'line-through', color: 'gray' } : {}
-              }}
             />
+
           </ListItem>
         ))}
       </List>

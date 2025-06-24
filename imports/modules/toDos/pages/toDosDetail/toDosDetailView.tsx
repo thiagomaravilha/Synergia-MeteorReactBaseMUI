@@ -11,6 +11,7 @@ import SysFormButton from '/imports/ui/components/sysFormFields/sysFormButton/sy
 import { SysCheckBox } from '/imports/ui/components/sysFormFields/sysCheckBoxField/sysCheckBoxField';
 import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import { Box, CircularProgress } from '@mui/material';
+import SysSwitch from '/imports/ui/components/sysFormFields/sysSwitch/sysSwitch';
 
 const ToDosDetailView = () => {
   const controller = useContext(ToDosDetailControllerContext);
@@ -74,6 +75,11 @@ const ToDosDetailView = () => {
               name="concluido"
               label="Tarefa concluída?"
               disabled={isCreate}
+            />
+            <SysSwitch
+              name="isPersonal"
+              label="Tarefa pessoal?"
+              disabled={isView}
             />
           </FormColumn>
         </Body>

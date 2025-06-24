@@ -4,9 +4,11 @@ import { ISchema } from '/imports/typings/ISchema';
 export interface IToDos extends IDoc {
   descricao: string;
   concluido?: boolean;
+  isPersonal?: boolean;
   createdby?: string;
   createdat?: Date;
   nomeUsuario?: string;
+  
 }
 
 export const toDosSch: ISchema<IToDos> = {
@@ -19,6 +21,12 @@ export const toDosSch: ISchema<IToDos> = {
   concluido: {
     type: Boolean,
     label: 'Tarefa concluída?',
+    optional: true,
+    defaultValue: false
+  },
+  isPersonal: {
+    type: Boolean,
+    label: 'Tarefa pessoal?',
     optional: true,
     defaultValue: false
   },
