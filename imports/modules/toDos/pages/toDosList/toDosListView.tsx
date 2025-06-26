@@ -12,12 +12,14 @@ import {
   Dialog,
   Tooltip,
   Stack,
-  Button
+  Button,
+  Menu,
+  MenuItem
 } from '@mui/material';
-import AssignmentIcon from '@mui/icons-material/Assignment';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LockIcon from '@mui/icons-material/Lock';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import { ToDosListControllerContext } from './toDosListController';
 import AppLayoutContext from '/imports/app/appLayoutProvider/appLayoutContext';
@@ -32,6 +34,20 @@ import ToDosDetailController from '../toDosDetail/toDosDetailController';
 const ToDosListView = () => {
   const controller = React.useContext(ToDosListControllerContext);
   const sysLayoutContext = React.useContext(AppLayoutContext);
+
+  const [menuAnchorEl, setMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [selectedMenuId, setSelectedMenuId] = React.useState<string | null>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, taskId: string) => {
+    event.stopPropagation();
+    setMenuAnchorEl(event.currentTarget);
+    setSelectedMenuId(taskId);
+  };
+
+  const handleMenuClose = () => {
+    setMenuAnchorEl(null);
+    setSelectedMenuId(null);
+  };
 
   const { Container, LoadingContainer } = ToDosListStyles;
 
@@ -58,11 +74,7 @@ const ToDosListView = () => {
           onChange={(e) => controller.setSearchInput(e.target.value)}
           sxMap={{ textField: { width: '100%' } }}
         />
-        <Button
-          variant="contained"
-          onClick={controller.onSearch}
-          sx={{ whiteSpace: 'nowrap' }}
-        >
+        <Button variant="contained" onClick={controller.onSearch} sx={{ whiteSpace: 'nowrap' }}>
           Pesquisar
         </Button>
         <Button
@@ -74,10 +86,7 @@ const ToDosListView = () => {
         >
           Mostrar lista completa
         </Button>
-
-
       </Stack>
-
 
       <List sx={{ width: '100%' }}>
         {controller.todoList.map((task) => (
@@ -88,44 +97,62 @@ const ToDosListView = () => {
             secondaryAction={
               <>
                 <IconButton
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    controller.onToggleCheck(task);
-                  }}
+                  aria-label="Opções"
+                  onClick={(event) => task._id && handleMenuOpen(event, task._id)}
                 >
-                  <Checkbox checked={task.concluido} />
+                  <MoreVertIcon />
                 </IconButton>
-
-                <IconButton
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (task._id) {
-                      controller.onEditButtonClick(task._id);
-                    }
-                  }}
+                <Menu
+                  anchorEl={menuAnchorEl}
+                  open={selectedMenuId === task._id}
+                  onClose={handleMenuClose}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  <EditIcon />
-                </IconButton>
-
-                <IconButton
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    DeleteDialog({
-                      showDialog: sysLayoutContext.showDialog,
-                      closeDialog: sysLayoutContext.closeDialog,
-                      title: 'Excluir tarefa',
-                      message: `Deseja excluir a tarefa "${task.nome}"?`,
-                      onDeleteConfirm: () => controller.onDeleteButtonClick(task)
-                    });
-                  }}
-                >
-                  <DeleteIcon />
-                </IconButton>
+                  <MenuItem
+                    onClick={() => {
+                      if (task._id) {
+                        controller.onEditButtonClick(task._id);
+                      }
+                      handleMenuClose();
+                    }}
+                  >
+                    <ListItemIcon>
+                      <EditIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Editar</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      DeleteDialog({
+                        showDialog: sysLayoutContext.showDialog,
+                        closeDialog: sysLayoutContext.closeDialog,
+                        title: 'Excluir tarefa',
+                        message: `Deseja excluir a tarefa "${task.nome}"?`,
+                        onDeleteConfirm: () => controller.onDeleteButtonClick(task)
+                      });
+                      handleMenuClose();
+                    }}
+                  >
+                    <ListItemIcon>
+                      <DeleteIcon fontSize="small" />
+                    </ListItemIcon>
+                    <ListItemText>Excluir</ListItemText>
+                  </MenuItem>
+                </Menu>
               </>
             }
           >
             <ListItemIcon>
-              <AssignmentIcon />
+              <Checkbox
+                edge="start"
+                checked={!!task.concluido}
+                tabIndex={-1}
+                disableRipple
+                onClick={(event) => {
+                  event.stopPropagation();
+                  controller.onToggleCheck(task);
+                }}
+              />
             </ListItemIcon>
             <ListItemText
               primary={
@@ -135,12 +162,11 @@ const ToDosListView = () => {
                     sx={{
                       fontWeight: 'bold',
                       textDecoration: task.concluido ? 'line-through' : 'none',
-                      color: task.concluido ? 'text.disabled' : 'text.primary',
+                      color: task.concluido ? 'text.disabled' : 'text.primary'
                     }}
                   >
                     {task.nome}
                   </Typography>
-                  {/* Lógica do ícone de cadeado atualizada para usar o campo 'tipo' */}
                   {task.tipo === 'Pessoal' && (
                     <Tooltip title="Tarefa pessoal">
                       <LockIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
@@ -155,7 +181,7 @@ const ToDosListView = () => {
                       sx={{
                         display: 'block',
                         textDecoration: task.concluido ? 'line-through' : 'none',
-                        color: task.concluido ? 'text.disabled' : 'text.secondary',
+                        color: task.concluido ? 'text.disabled' : 'text.secondary'
                       }}
                       component="span"
                       variant="body2"
@@ -164,7 +190,11 @@ const ToDosListView = () => {
                       {task.descricao}
                     </Typography>
                   )}
-                  <Typography component="span" variant="caption" sx={{ display: 'block', fontStyle: 'italic', color: 'text.secondary' }}>
+                  <Typography
+                    component="span"
+                    variant="caption"
+                    sx={{ display: 'block', fontStyle: 'italic', color: 'text.secondary' }}
+                  >
                     {`Criado por: ${task.nomeUsuario ?? 'Desconhecido'}`}
                   </Typography>
                 </React.Fragment>
@@ -182,12 +212,7 @@ const ToDosListView = () => {
         onClick={controller.onAddButtonClick}
       />
 
-      <Dialog
-        open={controller.isModalOpen}
-        onClose={controller.onCloseModal}
-        fullWidth
-        maxWidth="sm"
-      >
+      <Dialog open={controller.isModalOpen} onClose={controller.onCloseModal} fullWidth maxWidth="sm">
         <ToDosModuleContext.Provider
           value={{
             state: controller.modalState,
