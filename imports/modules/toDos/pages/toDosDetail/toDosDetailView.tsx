@@ -11,7 +11,7 @@ import SysFormButton from '/imports/ui/components/sysFormFields/sysFormButton/sy
 import { SysCheckBox } from '/imports/ui/components/sysFormFields/sysCheckBoxField/sysCheckBoxField';
 import SysIcon from '/imports/ui/components/sysIcon/sysIcon';
 import { Box, CircularProgress } from '@mui/material';
-import SysSwitch from '/imports/ui/components/sysFormFields/sysSwitch/sysSwitch';
+import { SysSelectField } from '/imports/ui/components/sysFormFields/sysSelectField/sysSelectField';
 
 const ToDosDetailView = () => {
   const controller = useContext(ToDosDetailControllerContext);
@@ -46,7 +46,7 @@ const ToDosDetailView = () => {
             ? 'Adicionar Tarefa'
             : isEdit
             ? 'Editar Tarefa'
-            : controller.document?.descricao ?? 'Visualizar Tarefa'}
+            : controller.document?.nome ?? 'Visualizar Tarefa'}
         </Typography>
         <IconButton onClick={controller.closePage}>
           <SysIcon name="close" />
@@ -63,7 +63,15 @@ const ToDosDetailView = () => {
         <Body>
           <FormColumn>
             <SysTextField
+              name="nome"
+              label="Nome da tarefa"
+              placeholder="Dê um nome para a tarefa"
+              max={100}
+              showNumberCharactersTyped
+            />
+            <SysTextField
               name="descricao"
+              label="Descrição"
               placeholder="Descreva a tarefa"
               multiline
               rows={3}
@@ -76,9 +84,13 @@ const ToDosDetailView = () => {
               label="Tarefa concluída?"
               disabled={isCreate}
             />
-            <SysSwitch
-              name="isPersonal"
-              label="Tarefa pessoal?"
+            <SysSelectField
+              name="tipo"
+              label="Tipo da Tarefa"
+              options={[
+                { value: 'Pública', label: 'Pública' },
+                { value: 'Pessoal', label: 'Pessoal' }
+              ]}
               disabled={isView}
             />
           </FormColumn>

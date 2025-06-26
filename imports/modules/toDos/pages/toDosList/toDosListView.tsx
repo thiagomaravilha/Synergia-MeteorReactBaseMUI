@@ -50,10 +50,10 @@ const ToDosListView = () => {
     <Container>
       <Typography variant="h5">Lista de Tarefas</Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+      <Stack direction="row" spacing={1} sx={{ mb: 2, width: '100%' }}>
         <SysTextField
           name="search"
-          placeholder="Pesquisar por descrição"
+          placeholder="Pesquisar por nome ou descrição"
           value={controller.searchInput}
           onChange={(e) => controller.setSearchInput(e.target.value)}
           sxMap={{ textField: { width: '100%' } }}
@@ -114,7 +114,7 @@ const ToDosListView = () => {
                       showDialog: sysLayoutContext.showDialog,
                       closeDialog: sysLayoutContext.closeDialog,
                       title: 'Excluir tarefa',
-                      message: `Deseja excluir a tarefa "${task.descricao}"?`,
+                      message: `Deseja excluir a tarefa "${task.nome}"?`,
                       onDeleteConfirm: () => controller.onDeleteButtonClick(task)
                     });
                   }}
@@ -133,20 +133,42 @@ const ToDosListView = () => {
                   <Typography
                     variant="body1"
                     sx={{
+                      fontWeight: 'bold',
                       textDecoration: task.concluido ? 'line-through' : 'none',
-                      color: task.concluido ? 'gray' : 'inherit'
+                      color: task.concluido ? 'text.disabled' : 'text.primary',
                     }}
                   >
-                    {task.descricao}
+                    {task.nome}
                   </Typography>
-                  {task.isPersonal && (
+                  {/* Lógica do ícone de cadeado atualizada para usar o campo 'tipo' */}
+                  {task.tipo === 'Pessoal' && (
                     <Tooltip title="Tarefa pessoal">
                       <LockIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
                     </Tooltip>
                   )}
                 </Box>
               }
-              secondary={`Criado por: ${task.nomeUsuario ?? 'Desconhecido'}`}
+              secondary={
+                <React.Fragment>
+                  {task.descricao && (
+                    <Typography
+                      sx={{
+                        display: 'block',
+                        textDecoration: task.concluido ? 'line-through' : 'none',
+                        color: task.concluido ? 'text.disabled' : 'text.secondary',
+                      }}
+                      component="span"
+                      variant="body2"
+                      color="text.secondary"
+                    >
+                      {task.descricao}
+                    </Typography>
+                  )}
+                  <Typography component="span" variant="caption" sx={{ display: 'block', fontStyle: 'italic', color: 'text.secondary' }}>
+                    {`Criado por: ${task.nomeUsuario ?? 'Desconhecido'}`}
+                  </Typography>
+                </React.Fragment>
+              }
             />
           </ListItem>
         ))}

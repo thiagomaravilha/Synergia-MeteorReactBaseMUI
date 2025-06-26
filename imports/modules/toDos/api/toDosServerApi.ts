@@ -20,24 +20,31 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       (filter: { descricao?: string } = {}) => {
         const userId = Meteor.userId();
 
-        const finalFilter: any = {
+        let finalFilter: any = {
           $or: [
-            { isPersonal: { $ne: true } },
+            { tipo: 'Pública' },
             ...(userId ? [{ createdby: userId }] : [])
           ]
         };
 
         if (filter?.descricao) {
-          finalFilter.descricao = { $regex: filter.descricao, $options: 'i' };
+          const searchRegex = { $regex: filter.descricao, $options: 'i' };
+          finalFilter = {
+            $and: [
+              finalFilter,
+              { $or: [{ descricao: searchRegex }, { nome: searchRegex }] }
+            ]
+          };
         }
 
         return this.defaultListCollectionPublication(finalFilter, {
           projection: {
+            nome: 1,
             descricao: 1,
             concluido: 1,
             createdat: 1,
             createdby: 1,
-            isPersonal: 1
+            tipo: 1
           }
         });
       },
@@ -60,7 +67,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
       const finalFilter = {
         $or: [
-          { isPersonal: { $ne: true } },
+          { tipo: 'Pública' },
           ...(userId ? [{ createdby: userId }] : [])
         ],
         ...filter
@@ -68,11 +75,12 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
       return this.defaultDetailCollectionPublication(finalFilter as Partial<IToDos>, {
         projection: {
+          nome: 1,
           descricao: 1,
           concluido: 1,
           createdby: 1,
           createdat: 1,
-          isPersonal: 1
+          tipo: 1
         }
       });
     });
