@@ -9,8 +9,9 @@ import AppLayoutContext from '/imports/app/appLayoutProvider/appLayoutContext';
 
 type ScreenState = 'view' | 'edit' | 'create';
 
-interface IToDosListControllerContext {
+const INITIAL_VISIBLE_COUNT = 4;
 
+interface IToDosListControllerContext {
   onAddButtonClick: () => void;
   onDeleteButtonClick: (row: IToDos) => void;
   onToggleCheck: (row: IToDos) => void;
@@ -20,14 +21,24 @@ interface IToDosListControllerContext {
   selectedTaskId: string | null;
   modalState: ScreenState;
   isModalOpen: boolean;
-  todoList: IToDos[];
+  naoConcluidas: IToDos[];
+  concluidas: IToDos[];
   loading: boolean;
   searchInput: string;
   hasSearched: boolean;
   setSearchInput: (value: string) => void;
   onSearch: () => void;
   onClearSearch: () => void;
-  
+  onShowMoreNaoConcluidas: () => void;
+  onShowMoreConcluidas: () => void;
+  onShowLessNaoConcluidas: () => void;
+  onShowLessConcluidas: () => void;
+  canShowMoreNaoConcluidas: boolean;
+  canShowMoreConcluidas: boolean;
+  showAllNaoConcluidas: boolean;
+  showAllConcluidas: boolean;
+  totalNaoConcluidas: number;
+  totalConcluidas: number;
 }
 
 export const ToDosListControllerContext = React.createContext<IToDosListControllerContext>(
@@ -41,32 +52,42 @@ const ToDosListController = () => {
   const [searchInput, setSearchInput] = useState('');
   const [searchText, setSearchText] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  
+  const [showAllNaoConcluidas, setShowAllNaoConcluidas] = useState(false);
+  const [showAllConcluidas, setShowAllConcluidas] = useState(false);
+
   const sysLayoutContext = useContext(AppLayoutContext);
 
-
-
-  const { loading, toDoss } = useTracker(() => {
+  const { loading, naoConcluidas, concluidas } = useTracker(() => {
     const filter = searchText ? { descricao: searchText } : {};
     const subHandle = toDosApi.subscribe('toDosList', filter);
-    const toDoss = subHandle?.ready() ? toDosApi.find({}).fetch() : [];
+    const isLoading = !(subHandle && subHandle.ready());
+    const allToDos = toDosApi.find({}).fetch();
+    
+    const naoConcluidasItems = allToDos.filter(t => !t.concluido);
+    const concluidasItems = allToDos.filter(t => t.concluido);
+
     return {
-      toDoss,
-      loading: !!subHandle && !subHandle.ready()
+      naoConcluidas: naoConcluidasItems,
+      concluidas: concluidasItems,
+      loading: isLoading,
     };
   }, [searchText]);
 
   const onSearch = useCallback(() => {
+    setShowAllNaoConcluidas(false);
+    setShowAllConcluidas(false);
     setSearchText(searchInput.trim());
-    setHasSearched(true);
+    setHasSearched(!!searchInput.trim());
   }, [searchInput]);
-
 
   const onClearSearch = useCallback(() => {
     setSearchText('');
     setSearchInput('');
     setHasSearched(false);
+    setShowAllNaoConcluidas(false);
+    setShowAllConcluidas(false);
   }, []);
-
 
   const onAddButtonClick = useCallback(() => {
     const newDocumentId = nanoid();
@@ -78,26 +99,15 @@ const ToDosListController = () => {
   const onDeleteButtonClick = useCallback((row: IToDos) => {
     toDosApi.remove(row, (e: IMeteorError, res?: { message?: string }) => {
       if (!e) {
-        sysLayoutContext.showNotification?.({
-          type: 'success',
-          title: 'Tarefa removida',
-          message: res?.message ?? 'Tarefa excluída com sucesso!'
-        });
+        sysLayoutContext.showNotification?.({ type: 'success', title: 'Tarefa removida', message: res?.message ?? 'Tarefa excluída com sucesso!' });
       } else {
-        sysLayoutContext.showNotification?.({
-          type: 'error',
-          title: 'Erro ao excluir',
-          message: e.reason || 'Erro desconhecido ao remover tarefa'
-        });
+        sysLayoutContext.showNotification?.({ type: 'error', title: 'Erro ao excluir', message: e.reason || 'Erro desconhecido ao remover tarefa' });
       }
     });
   }, [sysLayoutContext]);
 
   const onToggleCheck = useCallback((row: IToDos) => {
-    toDosApi.update({
-      ...row,
-      concluido: !row.concluido
-    });
+    toDosApi.update({ ...row, concluido: !row.concluido });
   }, []);
 
   const onItemClick = useCallback((id: string) => {
@@ -116,28 +126,69 @@ const ToDosListController = () => {
     setSelectedTaskId(null);
     setIsModalOpen(false);
   }, []);
-
-  const providerValues = useMemo(
-    () => ({
-      onAddButtonClick,
-      onDeleteButtonClick,
-      onToggleCheck,
-      onItemClick,
-      onEditButtonClick,
-      onCloseModal,
-      selectedTaskId,
-      modalState,
-      isModalOpen,
-      todoList: toDoss,
-      loading,
-      searchInput,
-      hasSearched,
-      setSearchInput,
-      onSearch,
-      onClearSearch
-    }),
-    [toDoss, loading, selectedTaskId, isModalOpen, modalState, searchInput, hasSearched, onDeleteButtonClick, onSearch, onClearSearch]
+  
+  const onShowMoreNaoConcluidas = useCallback(() => setShowAllNaoConcluidas(true), []);
+  const onShowMoreConcluidas = useCallback(() => setShowAllConcluidas(true), []);
+  const onShowLessNaoConcluidas = useCallback(() => setShowAllNaoConcluidas(false), []);
+  const onShowLessConcluidas = useCallback(() => setShowAllConcluidas(false), []);
+  
+  const visibleNaoConcluidas = useMemo(() => 
+    showAllNaoConcluidas ? naoConcluidas : naoConcluidas.slice(0, INITIAL_VISIBLE_COUNT),
+    [naoConcluidas, showAllNaoConcluidas]
   );
+  
+  const visibleConcluidas = useMemo(() =>
+    showAllConcluidas ? concluidas : concluidas.slice(0, INITIAL_VISIBLE_COUNT),
+    [concluidas, showAllConcluidas]
+  );
+  
+  const canShowMoreNaoConcluidas = !showAllNaoConcluidas && naoConcluidas.length > INITIAL_VISIBLE_COUNT;
+  const canShowMoreConcluidas = !showAllConcluidas && concluidas.length > INITIAL_VISIBLE_COUNT;
+
+  const providerValues = useMemo(() => ({
+    onAddButtonClick,
+    onDeleteButtonClick,
+    onToggleCheck,
+    onItemClick,
+    onEditButtonClick,
+    onCloseModal,
+    selectedTaskId,
+    modalState,
+    isModalOpen,
+    naoConcluidas: visibleNaoConcluidas,
+    concluidas: visibleConcluidas,
+    loading,
+    searchInput,
+    hasSearched,
+    setSearchInput,
+    onSearch,
+    onClearSearch,
+    onShowMoreNaoConcluidas,
+    onShowMoreConcluidas,
+    onShowLessNaoConcluidas,
+    onShowLessConcluidas,
+    canShowMoreNaoConcluidas,
+    canShowMoreConcluidas,
+    showAllNaoConcluidas,
+    showAllConcluidas,
+    totalNaoConcluidas: naoConcluidas.length,
+    totalConcluidas: concluidas.length
+  }), [
+    visibleNaoConcluidas,
+    visibleConcluidas,
+    loading,
+    selectedTaskId,
+    isModalOpen,
+    modalState,
+    searchInput,
+    hasSearched,
+    naoConcluidas.length,
+    concluidas.length,
+    canShowMoreNaoConcluidas,
+    canShowMoreConcluidas,
+    showAllNaoConcluidas,
+    showAllConcluidas
+  ]);
 
   return (
     <ToDosListControllerContext.Provider value={providerValues}>

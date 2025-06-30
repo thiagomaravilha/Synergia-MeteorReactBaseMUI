@@ -7,19 +7,20 @@ import { SysSectionPaddingXY } from '/imports/ui/layoutComponents/sysLayoutCompo
 interface IToDosListStyles {
   Container: ElementType<BoxProps>;
   LoadingContainer: ElementType<BoxProps>;
+  ShowMoreButtonContainer: ElementType<BoxProps>;
 }
 
 const ToDosListStyles: IToDosListStyles = {
-  Container: styled(SysSectionPaddingXY)(() => ({
+  Container: styled(SysSectionPaddingXY)(({ theme }) => ({
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'flex-start',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     width: '100%',
-    height: '100vh',
+    height: '100%',
     overflow: 'auto',
-    gap: sysSizing.spacingFixedMd,
-    marginBottom: sysSizing.contentFabDistance
+    gap: theme.spacing(1),
+    paddingBottom: sysSizing.contentFabDistance
   })),
   LoadingContainer: styled(Box)(({ theme }) => ({
     width: '100%',
@@ -28,8 +29,18 @@ const ToDosListStyles: IToDosListStyles = {
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'column',
-    gap: theme.spacing(2)
-  }))
+    gap: theme.spacing(2),
+    height: 'calc(100vh - 200px)'
+  })),
+
+  ShowMoreButtonContainer: styled(Box)(({ theme }) => ({
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: theme.spacing(1, 0),
+    marginTop: theme.spacing(1),
+  })),
 };
 
 export default ToDosListStyles;

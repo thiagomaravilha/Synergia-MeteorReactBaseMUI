@@ -17,10 +17,10 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
     this.addTransformedPublication(
       'toDosList',
-      (filter: { descricao?: string } = {}) => {
+      (filter: { descricao?: string; skip?: number; limit?: number } = {}) => {
         const userId = Meteor.userId();
 
-        let finalFilter: any = {
+        let baseFilter: any = {
           $or: [
             { tipo: 'Pública' },
             ...(userId ? [{ createdby: userId }] : [])
@@ -29,15 +29,15 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
         if (filter?.descricao) {
           const searchRegex = { $regex: filter.descricao, $options: 'i' };
-          finalFilter = {
+          baseFilter = {
             $and: [
-              finalFilter,
+              baseFilter,
               { $or: [{ descricao: searchRegex }, { nome: searchRegex }] }
             ]
           };
         }
-
-        return this.defaultListCollectionPublication(finalFilter, {
+        
+        return this.defaultListCollectionPublication(baseFilter, {
           projection: {
             nome: 1,
             descricao: 1,
@@ -45,22 +45,23 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
             createdat: 1,
             createdby: 1,
             tipo: 1
-          }
+          },
+          skip: filter?.skip ?? 0,
+          limit: filter?.limit,
+          sort: { createdat: -1 }
         });
       },
       async (doc: IToDos & { nomeUsuario?: string }) => {
-        const userProfileDoc = await userprofileServerApi
+        const userProfile = await userprofileServerApi
           .getCollectionInstance()
           .findOneAsync({ _id: doc.createdby });
 
         return {
           ...doc,
-          nomeUsuario: userProfileDoc?.username || 'Desconhecido'
+          nomeUsuario: userProfile?.username || 'Desconhecido'
         };
       }
     );
-
-
 
     this.addPublication('toDosDetail', (filter = {}, context: IContext) => {
       const userId = context?.user?._id;
@@ -100,18 +101,18 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       'view/:toDosId',
       async (params, _options) => {
         if (params.toDosId) {
-          const cursor = await self
-            .defaultCollectionPublication({ _id: params.toDosId }, {});
+          const cursor = await self.defaultCollectionPublication({ _id: params.toDosId }, {});
           const result = await cursor.fetchAsync();
           return result;
-        } else {
-          return { ...params };
         }
+
+        return { ...params };
       },
       ['get']
     );
   }
 
+  
   async serverInsert(doc: IToDos, context: IContext) {
     doc.createdby = context.user._id;
     const _id = await super.serverInsert(doc, context);
@@ -121,6 +122,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       _id
     };
   }
+
 
   async serverUpdate(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });
@@ -138,6 +140,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
       message: 'Tarefa atualizada com sucesso! (Mensagem do Backend)'
     };
   }
+
 
   async serverRemove(doc: IToDos, context: IContext) {
     const task = await this.collectionInstance.findOneAsync({ _id: doc._id });

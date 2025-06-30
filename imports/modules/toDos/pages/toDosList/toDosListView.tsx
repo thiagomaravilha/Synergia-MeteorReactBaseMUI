@@ -30,6 +30,7 @@ import ToDosListStyles from './toDosListStyles';
 import DeleteDialog from '/imports/ui/appComponents/showDialog/custom/deleteDialog/deleteDialog';
 import { ToDosModuleContext } from '../../toDosContainer';
 import ToDosDetailController from '../toDosDetail/toDosDetailController';
+import { IToDos } from '../../api/toDosSch';
 
 const ToDosListView = () => {
   const controller = React.useContext(ToDosListControllerContext);
@@ -49,16 +50,15 @@ const ToDosListView = () => {
     setSelectedMenuId(null);
   };
 
-  const { Container, LoadingContainer } = ToDosListStyles;
+  const { Container, LoadingContainer, ShowMoreButtonContainer } = ToDosListStyles;
+  const INITIAL_VISIBLE_COUNT = 4;
 
   if (controller.loading) {
     return (
-      <Container>
-        <LoadingContainer>
-          <CircularProgress />
-          <Typography variant="body1">Aguarde, carregando tarefas...</Typography>
-        </LoadingContainer>
-      </Container>
+      <LoadingContainer>
+        <CircularProgress />
+        <Typography variant="body1">Aguarde, carregando tarefas...</Typography>
+      </LoadingContainer>
     );
   }
 
@@ -69,161 +69,150 @@ const ToDosListView = () => {
       <Stack direction="row" spacing={1} sx={{ mb: 2, width: '100%' }}>
         <SysTextField
           name="search"
-          placeholder="Pesquisar por nome ou descrição"
+          placeholder="Pesquisar por descrição..."
           value={controller.searchInput}
           onChange={(e) => controller.setSearchInput(e.target.value)}
+          onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && controller.onSearch()}
           sxMap={{ textField: { width: '100%' } }}
         />
         <Button variant="contained" onClick={controller.onSearch} sx={{ whiteSpace: 'nowrap' }}>
           Pesquisar
         </Button>
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={controller.onClearSearch}
-          sx={{ whiteSpace: 'nowrap', minWidth: 200 }}
-          disabled={!controller.hasSearched}
-        >
-          Mostrar lista completa
-        </Button>
+        {controller.hasSearched && (
+           <Button
+             variant="outlined"
+             color="secondary"
+             onClick={controller.onClearSearch}
+             sx={{ whiteSpace: 'nowrap' }}
+           >
+            Limpar busca
+           </Button>
+        )}
       </Stack>
 
-      <List sx={{ width: '100%' }}>
-        {controller.todoList.map((task) => (
-          <ListItem
-            key={task._id}
-            button
-            onClick={() => task._id && controller.onItemClick(task._id)}
-            secondaryAction={
-              <>
-                <IconButton
-                  aria-label="Opções"
-                  onClick={(event) => task._id && handleMenuOpen(event, task._id)}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-                <Menu
-                  anchorEl={menuAnchorEl}
-                  open={selectedMenuId === task._id}
-                  onClose={handleMenuClose}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MenuItem
-                    onClick={() => {
-                      if (task._id) {
-                        controller.onEditButtonClick(task._id);
-                      }
-                      handleMenuClose();
-                    }}
-                  >
-                    <ListItemIcon>
-                      <EditIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Editar</ListItemText>
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      DeleteDialog({
-                        showDialog: sysLayoutContext.showDialog,
-                        closeDialog: sysLayoutContext.closeDialog,
-                        title: 'Excluir tarefa',
-                        message: `Deseja excluir a tarefa "${task.nome}"?`,
-                        onDeleteConfirm: () => controller.onDeleteButtonClick(task)
-                      });
-                      handleMenuClose();
-                    }}
-                  >
-                    <ListItemIcon>
-                      <DeleteIcon fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText>Excluir</ListItemText>
-                  </MenuItem>
-                </Menu>
-              </>
-            }
-          >
-            <ListItemIcon>
-              <Checkbox
-                edge="start"
-                checked={!!task.concluido}
-                tabIndex={-1}
-                disableRipple
-                onClick={(event) => {
-                  event.stopPropagation();
-                  controller.onToggleCheck(task);
-                }}
-              />
-            </ListItemIcon>
-            <ListItemText
-              primary={
-                <Box display="flex" alignItems="center">
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontWeight: 'bold',
-                      textDecoration: task.concluido ? 'line-through' : 'none',
-                      color: task.concluido ? 'text.disabled' : 'text.primary'
-                    }}
-                  >
-                    {task.nome}
-                  </Typography>
-                  {task.tipo === 'Pessoal' && (
-                    <Tooltip title="Tarefa pessoal">
-                      <LockIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
-                    </Tooltip>
-                  )}
-                </Box>
-              }
-              secondary={
-                <React.Fragment>
-                  {task.descricao && (
-                    <Typography
-                      sx={{
-                        display: 'block',
-                        textDecoration: task.concluido ? 'line-through' : 'none',
-                        color: task.concluido ? 'text.disabled' : 'text.secondary'
-                      }}
-                      component="span"
-                      variant="body2"
-                      color="text.secondary"
-                    >
-                      {task.descricao}
-                    </Typography>
-                  )}
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    sx={{ display: 'block', fontStyle: 'italic', color: 'text.secondary' }}
-                  >
-                    {`Criado por: ${task.nomeUsuario ?? 'Desconhecido'}`}
-                  </Typography>
-                </React.Fragment>
-              }
-            />
-          </ListItem>
-        ))}
+      <Typography variant="h6" sx={{ mt: 2 }}>Não Concluídas ({controller.totalNaoConcluidas})</Typography>
+      <List sx={{ width: '100%', p: 0 }}>
+        {controller.naoConcluidas.length > 0 ? (
+          controller.naoConcluidas.map(renderListItem)
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic' }}>Nenhuma tarefa pendente.</Typography>
+        )}
       </List>
+      {controller.canShowMoreNaoConcluidas ? (
+        <ShowMoreButtonContainer>
+          <Button variant="text" onClick={controller.onShowMoreNaoConcluidas}>
+            Mostrar mais
+          </Button>
+        </ShowMoreButtonContainer>
+      ) : controller.showAllNaoConcluidas && controller.totalNaoConcluidas > INITIAL_VISIBLE_COUNT ? (
+        <ShowMoreButtonContainer>
+          <Button variant="text" onClick={controller.onShowLessNaoConcluidas}>
+            Mostrar menos
+          </Button>
+        </ShowMoreButtonContainer>
+      ) : null}
 
-      <SysFab
-        variant="extended"
-        text="Adicionar"
-        startIcon={<SysIcon name="add" />}
-        fixed
-        onClick={controller.onAddButtonClick}
-      />
+      <Typography variant="h6" sx={{ mt: 4 }}>Concluídas ({controller.totalConcluidas})</Typography>
+      <List sx={{ width: '100%', p: 0 }}>
+         {controller.concluidas.length > 0 ? (
+          controller.concluidas.map(renderListItem)
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic' }}>Nenhuma tarefa concluída.</Typography>
+        )}
+      </List>
+      {controller.canShowMoreConcluidas ? (
+        <ShowMoreButtonContainer>
+          <Button variant="text" onClick={controller.onShowMoreConcluidas}>
+            Mostrar mais
+          </Button>
+        </ShowMoreButtonContainer>
+      ) : controller.showAllConcluidas && controller.totalConcluidas > INITIAL_VISIBLE_COUNT ? (
+        <ShowMoreButtonContainer>
+          <Button variant="text" onClick={controller.onShowLessConcluidas}>
+            Mostrar menos
+          </Button>
+        </ShowMoreButtonContainer>
+      ) : null}
+
+      <SysFab variant="extended" text="Adicionar Tarefa" startIcon={<SysIcon name="add" />} fixed onClick={controller.onAddButtonClick} />
 
       <Dialog open={controller.isModalOpen} onClose={controller.onCloseModal} fullWidth maxWidth="sm">
-        <ToDosModuleContext.Provider
-          value={{
-            state: controller.modalState,
-            id: controller.selectedTaskId || ''
-          }}
-        >
+        <ToDosModuleContext.Provider value={{ state: controller.modalState, id: controller.selectedTaskId || '' }}>
           <ToDosDetailController />
         </ToDosModuleContext.Provider>
       </Dialog>
     </Container>
   );
+
+  function renderListItem(task: IToDos & { nomeUsuario?: string }) {
+    return (
+      <ListItem
+        key={task._id}
+        button
+        onClick={() => task._id && controller.onItemClick(task._id)}
+        divider
+        secondaryAction={(
+          <>
+            <IconButton aria-label="Opções" onClick={(event) => task._id && handleMenuOpen(event, task._id)}>
+              <MoreVertIcon />
+            </IconButton>
+            <Menu anchorEl={menuAnchorEl} open={selectedMenuId === task._id} onClose={handleMenuClose} onClick={(e) => e.stopPropagation()}>
+              <MenuItem onClick={() => { if(task._id) controller.onEditButtonClick(task._id); handleMenuClose(); }}>
+                <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
+                <ListItemText>Editar</ListItemText>
+              </MenuItem>
+              <MenuItem onClick={() => {
+                handleMenuClose();
+                DeleteDialog({
+                  showDialog: sysLayoutContext.showDialog,
+                  closeDialog: sysLayoutContext.closeDialog,
+                  title: 'Excluir tarefa',
+                  message: `Deseja realmente excluir a tarefa "${task.nome}"? Esta ação não pode ser desfeita.`,
+                  onDeleteConfirm: () => controller.onDeleteButtonClick(task)
+                });
+              }}>
+                <ListItemIcon><DeleteIcon fontSize="small" /></ListItemIcon>
+                <ListItemText>Excluir</ListItemText>
+              </MenuItem>
+            </Menu>
+          </>
+        )}
+      >
+        <ListItemIcon>
+          <Checkbox
+            edge="start"
+            checked={!!task.concluido}
+            tabIndex={-1}
+            disableRipple
+            onClick={(event) => { event.stopPropagation(); controller.onToggleCheck(task); }}
+          />
+        </ListItemIcon>
+        <ListItemText
+          primary={(
+            <Box display="flex" alignItems="center">
+              <Typography variant="body1" sx={{ fontWeight: 500, textDecoration: task.concluido ? 'line-through' : 'none', color: task.concluido ? 'text.disabled' : 'text.primary' }}>
+                {task.nome}
+              </Typography>
+              {task.tipo === 'Pessoal' && (
+                <Tooltip title="Tarefa pessoal">
+                  <LockIcon sx={{ fontSize: 16, ml: 1, color: 'text.secondary' }} />
+                </Tooltip>
+              )}
+            </Box>
+          )}
+          secondary={(
+            <>
+              {task.nomeUsuario && (
+                <Typography component="span" variant="caption" sx={{ display: 'block', fontStyle: 'italic', color: 'text.secondary' }}>
+                  {`Criado por: ${task.nomeUsuario}`}
+                </Typography>
+              )}
+            </>
+          )}
+        />
+      </ListItem>
+    );
+  }
 };
 
 export default ToDosListView;
