@@ -46,9 +46,7 @@ const SignInPage: React.FC = () => {
 		if (user) navigate('/');
 	}, [user]);
 
-	// Verifica o estado do botão assim que o form estiver montado
 	useEffect(() => {
-		// Timeout para garantir que o SysForm montou e populou os campos
 		setTimeout(() => {
 			checkButtonState();
 		}, 0);
@@ -57,11 +55,19 @@ const SignInPage: React.FC = () => {
 	return (
 		<Container>
 			<Content>
-				<Typography variant="h4" fontWeight="bold">
+				<Typography
+					variant="h1"
+					fontWeight="bold"
+					sx={{
+						color: (theme) => theme.palette.primary.main,
+						letterSpacing: 1,
+					}}
+				>
 					ToDo List
 				</Typography>
 
-				<Typography variant="body1">
+
+				<Typography variant="body1" color={(theme) => theme.palette.sysText?.body}>
 					Boas-vindas à sua lista de tarefas. <br />
 					Insira seu e-mail e senha para efetuar o login:
 				</Typography>
@@ -93,16 +99,20 @@ const SignInPage: React.FC = () => {
 								variant="contained"
 								fullWidth
 								disabled={isButtonDisabled}
-								sx={{
-									backgroundColor: isButtonDisabled ? '#c5c5c5' : '#6366f1',
-									color: '#fff',
+								sx={(theme) => ({
+									backgroundColor: isButtonDisabled
+										? theme.palette.sysAction?.bgDisabled
+										: theme.palette.primary.main,
+									color: theme.palette.primary.contrastText,
 									fontWeight: 'bold',
 									textTransform: 'none',
 									borderRadius: 2,
 									'&:hover': {
-										backgroundColor: isButtonDisabled ? '#c5c5c5' : '#4f46e5',
+										backgroundColor: isButtonDisabled
+											? theme.palette.sysAction?.bgDisabled
+											: theme.palette.primary.dark,
 									},
-								}}
+								})}
 							>
 								Entrar
 							</SysFormButton>
@@ -116,7 +126,11 @@ const SignInPage: React.FC = () => {
 						<Typography
 							component="span"
 							variant="link"
-							sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+							sx={(theme) => ({
+								cursor: 'pointer',
+								textDecoration: 'underline',
+								color: theme.palette.primary.main,
+							})}
 							onClick={handleForgotPassword}
 						>
 							Clique aqui
@@ -130,7 +144,11 @@ const SignInPage: React.FC = () => {
 						<Typography
 							component="span"
 							variant="link"
-							sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+							sx={(theme) => ({
+								cursor: 'pointer',
+								textDecoration: 'underline',
+								color: theme.palette.primary.main,
+							})}
 							onClick={() => navigate('/sign-up')}
 						>
 							Cadastre-se

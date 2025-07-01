@@ -30,23 +30,25 @@ const sysGreyColors: Partial<Record<ColorKey, string>> = {
 } as const;
 //endregion
 
-//region Purple colors
+//region Teal colors (nova paleta azul-esverdeada)
 const sysPurpleColors: Partial<Record<ColorKey, string>> = {
-  10: "#09006b",
-  20: "#1400a8",
-  30: "#312ebd",
-  40: "#4b4ad5",
-  50: "#6768f2",
-  60: "#8183ff",
-  70: "#a1a2ff",
-  80: "#c1c1ff",
-  90: "#e1dfff",
-  95: "#eff0ff",
-  97: "#f5f6fe",
-  grey: "#333370",
-  transparent: "#6768f21a"
+  10: "#004d40",
+  20: "#00695c",
+  30: "#00796b",
+  40: "#00897b",
+  50: "#009688",
+  60: "#26a69a",
+  70: "#4db6ac",
+  80: "#80cbc4",
+  90: "#b2dfdb",
+  95: "#e0f2f1",
+  97: "#f1fdfb",
+  grey: "#005f56",
+  transparent: "#0096881a"
 } as const;
 //endregion
+
+
 
 //region Green colors
 const sysGreenColors: Partial<Record<ColorKey, string>> = {

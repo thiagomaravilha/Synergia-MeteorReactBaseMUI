@@ -1,6 +1,6 @@
 import React from 'react';
-import {ISysTemplateProps} from '../getTemplate';
-import {BoxProps, Typography} from '@mui/material';
+import { ISysTemplateProps } from '../getTemplate';
+import { BoxProps, Typography } from '@mui/material';
 import TemplateAppBarStyles from './templateAppBarStyles';
 import SysAppBar from '../components/sysAppBar/sysAppBarController';
 
@@ -28,16 +28,27 @@ export const TemplateAppBar: React.FC<ITemplateAppBar> = ({
 };
 
 const BoilerplateLogo: React.FC = () => {
-	return (
-		<Typography
-			variant="subtitle1"
-			color={(theme) => theme.palette.sysText?.tertiary}
-			sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-			{'{ '}
-			<Typography color={(theme) => theme.palette.primary.contrastText} variant="inherit">
-				Lista de Tarefas
-			</Typography>{' '}
-			{'}'}
-		</Typography>
-	);
+  return (
+    <Typography
+      variant="subtitle1"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontWeight: 'bold',
+        color: (theme) => theme.palette.primary.light
+      }}
+    >
+      {'{ '}
+      <Typography
+        variant="inherit"
+        sx={{
+          color: (theme) => theme.palette.sysText?.baseContrast
+        }}
+      >
+        Lista de Tarefas
+      </Typography>{' '}
+      {'}'}
+    </Typography>
+  );
 };
