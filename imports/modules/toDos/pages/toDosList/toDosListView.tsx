@@ -67,29 +67,47 @@ const ToDosListView = () => {
     <Container>
       <Typography variant="h5">Lista de Tarefas</Typography>
 
-      <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
-        <SysTextField
-          name="search"
-          placeholder="Pesquisar por descrição..."
-          value={controller.searchInput}
-          onChange={(e) => controller.setSearchInput(e.target.value)}
-          onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && controller.onSearch()}
-          sxMap={{ textField: { width: '100%' } }}
-        />
-        <Button variant="contained" onClick={controller.onSearch} sx={{ whiteSpace: 'nowrap' }}>
-          Pesquisar
-        </Button>
-        {controller.hasSearched && (
-          <Button
-            variant="outlined"
-            color="secondary"
-            onClick={controller.onClearSearch}
-            sx={{ whiteSpace: 'nowrap' }}
-          >
-            Limpar busca
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        spacing={2}
+        sx={{ width: '100%', flexWrap: 'wrap' }}
+      >
+        <Stack direction="row" spacing={1} sx={{ width: '60%' }}>
+          <SysTextField
+            name="search"
+            placeholder="Pesquisar por descrição..."
+            value={controller.searchInput}
+            onChange={(e) => controller.setSearchInput(e.target.value)}
+            onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && controller.onSearch()}
+            sxMap={{ textField: { width: '100%' } }}
+          />
+          <Button variant="contained" onClick={controller.onSearch}>
+            Pesquisar
           </Button>
-        )}
+          {controller.hasSearched && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={controller.onClearSearch}
+            >
+              Limpar
+            </Button>
+          )}
+        </Stack>
+
+        <Button
+          variant={controller.mostrarSomenteMinhasTarefas ? 'contained' : 'outlined'}
+          color={controller.mostrarSomenteMinhasTarefas ? 'primary' : 'inherit'}
+          onClick={controller.alternarMinhasTarefas}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          Minhas Tarefas
+        </Button>
       </Stack>
+
+
 
       <ListsWrapper>
         

@@ -15,10 +15,6 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
     const self = this;
 
-    /**
-     * Publication for the recent tasks list on the Home screen.
-     * Fetches the 5 most recent tasks (public or user's own).
-     */
     this.addTransformedPublication(
       'toDosRecent',
       () => {
@@ -59,9 +55,10 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
     this.addTransformedPublication(
       'toDosList',
-      (filter: { descricao?: string; skip?: number; limit?: number } = {}) => {
+      (filter: { descricao?: string; usuarioId?: string; skip?: number; limit?: number } = {}) => {
         const userId = Meteor.userId();
 
+        // Começa com as tarefas públicas OU do próprio usuário logado
         let baseFilter: any = {
           $or: [
             { tipo: 'Pública' },
@@ -69,7 +66,16 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
           ]
         };
 
-        if (filter?.descricao) {
+        if (filter.usuarioId) {
+          baseFilter = {
+            $and: [
+              baseFilter,
+              { createdby: filter.usuarioId }
+            ]
+          };
+        }
+
+        if (filter.descricao) {
           const searchRegex = { $regex: filter.descricao, $options: 'i' };
           baseFilter = {
             $and: [
@@ -78,7 +84,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
             ]
           };
         }
-        
+
         return this.defaultListCollectionPublication(baseFilter, {
           projection: {
             nome: 1,
@@ -88,8 +94,8 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
             createdby: 1,
             tipo: 1
           },
-          skip: filter?.skip ?? 0,
-          limit: filter?.limit,
+          skip: filter.skip ?? 0,
+          limit: filter.limit,
           sort: { createdat: -1 }
         });
       },
@@ -104,6 +110,7 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
         };
       }
     );
+
 
     this.addPublication('toDosDetail', (filter = {}, context: IContext) => {
       const userId = context?.user?._id;

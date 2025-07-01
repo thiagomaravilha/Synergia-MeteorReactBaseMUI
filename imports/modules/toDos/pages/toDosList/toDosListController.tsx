@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useContext } from 'react';
 import ToDosListView from './toDosListView';
 import { nanoid } from 'nanoid';
 import { useTracker } from 'meteor/react-meteor-data';
+import { Meteor } from 'meteor/meteor';
 import { IToDos } from '../../api/toDosSch';
 import { toDosApi } from '../../api/toDosApi';
 import { IMeteorError } from '/imports/typings/IMeteorError';
@@ -39,6 +40,8 @@ interface IToDosListControllerContext {
   showAllConcluidas: boolean;
   totalNaoConcluidas: number;
   totalConcluidas: number;
+  mostrarSomenteMinhasTarefas: boolean;
+  alternarMinhasTarefas: () => void;
 }
 
 export const ToDosListControllerContext = React.createContext<IToDosListControllerContext>(
@@ -52,18 +55,29 @@ const ToDosListController = () => {
   const [searchInput, setSearchInput] = useState('');
   const [searchText, setSearchText] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
-  
+  const [mostrarSomenteMinhasTarefas, setMostrarSomenteMinhasTarefas] = useState(false);
+
   const [showAllNaoConcluidas, setShowAllNaoConcluidas] = useState(false);
   const [showAllConcluidas, setShowAllConcluidas] = useState(false);
 
   const sysLayoutContext = useContext(AppLayoutContext);
+  const usuarioId = Meteor.userId();
 
   const { loading, naoConcluidas, concluidas } = useTracker(() => {
-    const filter = searchText ? { descricao: searchText } : {};
-    const subHandle = toDosApi.subscribe('toDosList', filter);
+    const baseFilter: any = {};
+
+    if (searchText) {
+      baseFilter.descricao = searchText;
+    }
+
+    if (mostrarSomenteMinhasTarefas && usuarioId) {
+      baseFilter.usuarioId = usuarioId;
+    }
+
+    const subHandle = toDosApi.subscribe('toDosList', baseFilter);
     const isLoading = !(subHandle && subHandle.ready());
     const allToDos = toDosApi.find({}).fetch();
-    
+
     const naoConcluidasItems = allToDos.filter(t => !t.concluido);
     const concluidasItems = allToDos.filter(t => t.concluido);
 
@@ -72,7 +86,7 @@ const ToDosListController = () => {
       concluidas: concluidasItems,
       loading: isLoading,
     };
-  }, [searchText]);
+  }, [searchText, mostrarSomenteMinhasTarefas, usuarioId]);
 
   const onSearch = useCallback(() => {
     setShowAllNaoConcluidas(false);
@@ -126,22 +140,26 @@ const ToDosListController = () => {
     setSelectedTaskId(null);
     setIsModalOpen(false);
   }, []);
-  
+
+  const alternarMinhasTarefas = useCallback(() => {
+    setMostrarSomenteMinhasTarefas(prev => !prev);
+  }, []);
+
   const onShowMoreNaoConcluidas = useCallback(() => setShowAllNaoConcluidas(true), []);
   const onShowMoreConcluidas = useCallback(() => setShowAllConcluidas(true), []);
   const onShowLessNaoConcluidas = useCallback(() => setShowAllNaoConcluidas(false), []);
   const onShowLessConcluidas = useCallback(() => setShowAllConcluidas(false), []);
-  
-  const visibleNaoConcluidas = useMemo(() => 
+
+  const visibleNaoConcluidas = useMemo(() =>
     showAllNaoConcluidas ? naoConcluidas : naoConcluidas.slice(0, INITIAL_VISIBLE_COUNT),
     [naoConcluidas, showAllNaoConcluidas]
   );
-  
+
   const visibleConcluidas = useMemo(() =>
     showAllConcluidas ? concluidas : concluidas.slice(0, INITIAL_VISIBLE_COUNT),
     [concluidas, showAllConcluidas]
   );
-  
+
   const canShowMoreNaoConcluidas = !showAllNaoConcluidas && naoConcluidas.length > INITIAL_VISIBLE_COUNT;
   const canShowMoreConcluidas = !showAllConcluidas && concluidas.length > INITIAL_VISIBLE_COUNT;
 
@@ -172,7 +190,9 @@ const ToDosListController = () => {
     showAllNaoConcluidas,
     showAllConcluidas,
     totalNaoConcluidas: naoConcluidas.length,
-    totalConcluidas: concluidas.length
+    totalConcluidas: concluidas.length,
+    mostrarSomenteMinhasTarefas,
+    alternarMinhasTarefas
   }), [
     visibleNaoConcluidas,
     visibleConcluidas,
@@ -187,7 +207,8 @@ const ToDosListController = () => {
     canShowMoreNaoConcluidas,
     canShowMoreConcluidas,
     showAllNaoConcluidas,
-    showAllConcluidas
+    showAllConcluidas,
+    mostrarSomenteMinhasTarefas
   ]);
 
   return (
