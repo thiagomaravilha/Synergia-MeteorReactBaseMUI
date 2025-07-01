@@ -14,7 +14,8 @@ import {
   Stack,
   Button,
   Menu,
-  MenuItem
+  MenuItem,
+  alpha
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -50,7 +51,7 @@ const ToDosListView = () => {
     setSelectedMenuId(null);
   };
 
-  const { Container, LoadingContainer, ShowMoreButtonContainer } = ToDosListStyles;
+  const { Container, LoadingContainer, ShowMoreButtonContainer, ListsWrapper, ListColumn, ColumnHeader } = ToDosListStyles;
   const INITIAL_VISIBLE_COUNT = 4;
 
   if (controller.loading) {
@@ -66,7 +67,7 @@ const ToDosListView = () => {
     <Container>
       <Typography variant="h5">Lista de Tarefas</Typography>
 
-      <Stack direction="row" spacing={1} sx={{ mb: 2, width: '100%' }}>
+      <Stack direction="row" spacing={1} sx={{ width: '100%' }}>
         <SysTextField
           name="search"
           placeholder="Pesquisar por descrição..."
@@ -79,60 +80,71 @@ const ToDosListView = () => {
           Pesquisar
         </Button>
         {controller.hasSearched && (
-           <Button
-             variant="outlined"
-             color="secondary"
-             onClick={controller.onClearSearch}
-             sx={{ whiteSpace: 'nowrap' }}
-           >
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={controller.onClearSearch}
+            sx={{ whiteSpace: 'nowrap' }}
+          >
             Limpar busca
-           </Button>
+          </Button>
         )}
       </Stack>
 
-      <Typography variant="h6" sx={{ mt: 2 }}>Não Concluídas ({controller.totalNaoConcluidas})</Typography>
-      <List sx={{ width: '100%', p: 0 }}>
-        {controller.naoConcluidas.length > 0 ? (
-          controller.naoConcluidas.map(renderListItem)
-        ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic' }}>Nenhuma tarefa pendente.</Typography>
-        )}
-      </List>
-      {controller.canShowMoreNaoConcluidas ? (
-        <ShowMoreButtonContainer>
-          <Button variant="text" onClick={controller.onShowMoreNaoConcluidas}>
-            Mostrar mais
-          </Button>
-        </ShowMoreButtonContainer>
-      ) : controller.showAllNaoConcluidas && controller.totalNaoConcluidas > INITIAL_VISIBLE_COUNT ? (
-        <ShowMoreButtonContainer>
-          <Button variant="text" onClick={controller.onShowLessNaoConcluidas}>
-            Mostrar menos
-          </Button>
-        </ShowMoreButtonContainer>
-      ) : null}
+      <ListsWrapper>
+        
+        <ListColumn>
+          <ColumnHeader>
+            <Typography variant="h6">Não Concluídas ({controller.totalNaoConcluidas})</Typography>
+          </ColumnHeader>
+          <List sx={{ width: '100%', p: 0 }}>
+            {controller.naoConcluidas.length > 0 ? (
+              controller.naoConcluidas.map(renderListItem)
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic', textAlign: 'center' }}>Nenhuma tarefa pendente.</Typography>
+            )}
+          </List>
+          {controller.canShowMoreNaoConcluidas ? (
+            <ShowMoreButtonContainer>
+              <Button variant="text" onClick={controller.onShowMoreNaoConcluidas}>
+                Mostrar mais
+              </Button>
+            </ShowMoreButtonContainer>
+          ) : controller.showAllNaoConcluidas && controller.totalNaoConcluidas > INITIAL_VISIBLE_COUNT ? (
+            <ShowMoreButtonContainer>
+              <Button variant="text" onClick={controller.onShowLessNaoConcluidas}>
+                Mostrar menos
+              </Button>
+            </ShowMoreButtonContainer>
+          ) : null}
+        </ListColumn>
 
-      <Typography variant="h6" sx={{ mt: 4 }}>Concluídas ({controller.totalConcluidas})</Typography>
-      <List sx={{ width: '100%', p: 0 }}>
-         {controller.concluidas.length > 0 ? (
-          controller.concluidas.map(renderListItem)
-        ) : (
-          <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic' }}>Nenhuma tarefa concluída.</Typography>
-        )}
-      </List>
-      {controller.canShowMoreConcluidas ? (
-        <ShowMoreButtonContainer>
-          <Button variant="text" onClick={controller.onShowMoreConcluidas}>
-            Mostrar mais
-          </Button>
-        </ShowMoreButtonContainer>
-      ) : controller.showAllConcluidas && controller.totalConcluidas > INITIAL_VISIBLE_COUNT ? (
-        <ShowMoreButtonContainer>
-          <Button variant="text" onClick={controller.onShowLessConcluidas}>
-            Mostrar menos
-          </Button>
-        </ShowMoreButtonContainer>
-      ) : null}
+        <ListColumn>
+          <ColumnHeader>
+            <Typography variant="h6">Concluídas ({controller.totalConcluidas})</Typography>
+          </ColumnHeader>
+          <List sx={{ width: '100%', p: 0 }}>
+            {controller.concluidas.length > 0 ? (
+              controller.concluidas.map(renderListItem)
+            ) : (
+              <Typography variant="body2" color="text.secondary" sx={{ p: 2, fontStyle: 'italic', textAlign: 'center' }}>Nenhuma tarefa concluída.</Typography>
+            )}
+          </List>
+          {controller.canShowMoreConcluidas ? (
+            <ShowMoreButtonContainer>
+              <Button variant="text" onClick={controller.onShowMoreConcluidas}>
+                Mostrar mais
+              </Button>
+            </ShowMoreButtonContainer>
+          ) : controller.showAllConcluidas && controller.totalConcluidas > INITIAL_VISIBLE_COUNT ? (
+            <ShowMoreButtonContainer>
+              <Button variant="text" onClick={controller.onShowLessConcluidas}>
+                Mostrar menos
+              </Button>
+            </ShowMoreButtonContainer>
+          ) : null}
+        </ListColumn>
+      </ListsWrapper>
 
       <SysFab variant="extended" text="Adicionar Tarefa" startIcon={<SysIcon name="add" />} fixed onClick={controller.onAddButtonClick} />
 
@@ -151,13 +163,21 @@ const ToDosListView = () => {
         button
         onClick={() => task._id && controller.onItemClick(task._id)}
         divider
+        sx={{
+          borderRadius: 1,
+          '&:hover': {
+             // ALTERAÇÃO AQUI: Trocado 'action.hover' por 'primary.main' com baixa opacidade
+             backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.12),
+          },
+          mb: 0.5, // Adiciona um pequeno espaçamento entre os itens
+        }}
         secondaryAction={(
           <>
             <IconButton aria-label="Opções" onClick={(event) => task._id && handleMenuOpen(event, task._id)}>
               <MoreVertIcon />
             </IconButton>
             <Menu anchorEl={menuAnchorEl} open={selectedMenuId === task._id} onClose={handleMenuClose} onClick={(e) => e.stopPropagation()}>
-              <MenuItem onClick={() => { if(task._id) controller.onEditButtonClick(task._id); handleMenuClose(); }}>
+              <MenuItem onClick={() => { if (task._id) controller.onEditButtonClick(task._id); handleMenuClose(); }}>
                 <ListItemIcon><EditIcon fontSize="small" /></ListItemIcon>
                 <ListItemText>Editar</ListItemText>
               </MenuItem>

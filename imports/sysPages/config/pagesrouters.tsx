@@ -30,7 +30,7 @@ export const pagesRouterList: (IRoute | null)[] = [
 		templateVariant: 'None'
 	},
 	{
-		path: '/signup',
+		path: '/sign-up',
 		component: SignUp,
 		isProtected: false,
 		templateVariant: 'None'

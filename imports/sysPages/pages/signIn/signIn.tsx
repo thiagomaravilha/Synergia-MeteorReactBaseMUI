@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import SignInStyles from './signInStyles';
 import { useNavigate } from 'react-router-dom';
 import SysTextField from '../../../ui/components/sysFormFields/sysTextField/sysTextField';
@@ -7,10 +7,9 @@ import SysFormButton from '../../../ui/components/sysFormFields/sysFormButton/sy
 import { signInSchema } from './signinsch';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import SysIcon from '../../../ui/components/sysIcon/sysIcon';
 import AuthContext, { IAuthContext } from '/imports/app/authProvider/authContext';
 import AppLayoutContext from '/imports/app/appLayoutProvider/appLayoutContext';
+import { ISysFormMethods } from '../../../ui/components/sysForm/sysForm';
 
 const SignInPage: React.FC = () => {
 	const { showNotification } = useContext(AppLayoutContext);
@@ -18,57 +17,126 @@ const SignInPage: React.FC = () => {
 	const navigate = useNavigate();
 	const { Container, Content, FormContainer, FormWrapper } = SignInStyles;
 
+	const formRef = useRef<ISysFormMethods>(null);
+	const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+
 	const handleSubmit = ({ email, password }: { email: string; password: string }) => {
-	signIn(email, password, (err) => {
-		if (!err) {
-			navigate('/');
-			return;
-		}
-		showNotification({
-			type: 'error',
-			title: 'Erro ao tentar logar',
-			message: 'Email ou senha inválidos',
+		signIn(email, password, (err) => {
+			if (!err) {
+				navigate('/');
+				return;
+			}
+			showNotification({
+				type: 'error',
+				title: 'Erro ao tentar logar',
+				message: 'Email ou senha inválidos',
+			});
 		});
-	});
-};
+	};
 
 	const handleForgotPassword = () => navigate('/password-recovery');
+
+	const checkButtonState = () => {
+		const doc = formRef.current?.getDocValues();
+		const isFilled = !!doc?.email?.trim() && !!doc?.password?.trim();
+		setIsButtonDisabled(!isFilled);
+	};
 
 	useEffect(() => {
 		if (user) navigate('/');
 	}, [user]);
 
+	// Verifica o estado do botão assim que o form estiver montado
+	useEffect(() => {
+		// Timeout para garantir que o SysForm montou e populou os campos
+		setTimeout(() => {
+			checkButtonState();
+		}, 0);
+	}, []);
+
 	return (
 		<Container>
 			<Content>
-				<Typography variant="h1" display={'inline-flex'} gap={1}>
-					<Typography variant="inherit" color={(theme) => theme.palette.sysText?.tertiary}>
-						{'{'}
-					</Typography>
-					Boilerplate
-					<Typography variant="inherit" color="sysText.tertiary">
-						{'}'}
-					</Typography>
+				<Typography variant="h4" fontWeight="bold">
+					ToDo List
+				</Typography>
+
+				<Typography variant="body1">
+					Boas-vindas à sua lista de tarefas. <br />
+					Insira seu e-mail e senha para efetuar o login:
 				</Typography>
 
 				<FormContainer>
-					<Typography variant="h5">Acesse o sistema</Typography>
-					<SysForm schema={signInSchema} onSubmit={handleSubmit} debugAlerts={false}>
+					<SysForm
+						ref={formRef}
+						schema={signInSchema}
+						onSubmit={handleSubmit}
+						onChange={checkButtonState}
+						debugAlerts={false}
+					>
 						<FormWrapper>
-							<SysTextField name="email" label="Email" fullWidth placeholder="Digite seu email" />
-							<SysTextField label="Senha" fullWidth name="password" placeholder="Digite sua senha" type="password" />
-							<Button variant="text" sx={{ alignSelf: 'flex-end' }} onClick={handleForgotPassword}>
-								<Typography variant="link">Esqueci minha senha</Typography>
-							</Button>
-							<Box />
-							<SysFormButton variant="contained" color="primary" endIcon={<SysIcon name={'arrowForward'} />}>
+							<SysTextField
+								name="email"
+								label="E-mail"
+								fullWidth
+								placeholder="Digite seu e-mail"
+							/>
+							<SysTextField
+								name="password"
+								label="Senha"
+								fullWidth
+								placeholder="Digite sua senha"
+								type="password"
+							/>
+
+							<SysFormButton
+								variant="contained"
+								fullWidth
+								disabled={isButtonDisabled}
+								sx={{
+									backgroundColor: isButtonDisabled ? '#c5c5c5' : '#6366f1',
+									color: '#fff',
+									fontWeight: 'bold',
+									textTransform: 'none',
+									borderRadius: 2,
+									'&:hover': {
+										backgroundColor: isButtonDisabled ? '#c5c5c5' : '#4f46e5',
+									},
+								}}
+							>
 								Entrar
 							</SysFormButton>
 						</FormWrapper>
 					</SysForm>
 				</FormContainer>
 
-				<Box component="img" src="/images/wireframe/synergia-logo.svg" sx={{ width: '100%', maxWidth: '400px' }} />
+				<Box mt={2}>
+					<Typography fontSize={14}>
+						Esqueceu sua senha?{' '}
+						<Typography
+							component="span"
+							variant="link"
+							sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+							onClick={handleForgotPassword}
+						>
+							Clique aqui
+						</Typography>
+					</Typography>
+				</Box>
+
+				<Box mt={1}>
+					<Typography fontSize={14}>
+						Novo por aqui?{' '}
+						<Typography
+							component="span"
+							variant="link"
+							sx={{ cursor: 'pointer', textDecoration: 'underline' }}
+							onClick={() => navigate('/sign-up')}
+						>
+							Cadastre-se
+						</Typography>
+					</Typography>
+				</Box>
 			</Content>
 		</Container>
 	);

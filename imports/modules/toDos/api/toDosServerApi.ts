@@ -15,6 +15,48 @@ class ToDosServerApi extends ProductServerBase<IToDos> {
 
     const self = this;
 
+    /**
+     * Publication for the recent tasks list on the Home screen.
+     * Fetches the 5 most recent tasks (public or user's own).
+     */
+    this.addTransformedPublication(
+      'toDosRecent',
+      () => {
+        const userId = Meteor.userId();
+
+        const filter: any = {
+          $or: [
+            { tipo: 'Pública' },
+            ...(userId ? [{ createdby: userId }] : [])
+          ]
+        };
+        
+        return this.defaultListCollectionPublication(filter, {
+          projection: {
+            nome: 1,
+            descricao: 1,
+            concluido: 1,
+            createdat: 1,
+            createdby: 1,
+            tipo: 1,
+            nomeUsuario: 1
+          },
+          sort: { createdat: -1 },
+          limit: 5,
+        });
+      },
+      async (doc: IToDos & { nomeUsuario?: string }) => {
+        const userProfile = await userprofileServerApi
+          .getCollectionInstance()
+          .findOneAsync({ _id: doc.createdby });
+
+        return {
+          ...doc,
+          nomeUsuario: userProfile?.username || 'Desconhecido'
+        };
+      }
+    );
+
     this.addTransformedPublication(
       'toDosList',
       (filter: { descricao?: string; skip?: number; limit?: number } = {}) => {
