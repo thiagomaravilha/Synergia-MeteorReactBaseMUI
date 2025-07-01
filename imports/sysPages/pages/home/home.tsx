@@ -78,14 +78,14 @@ const Home: React.FC = () => {
 	return (
 		<Container>
 			<Header>
-				{/* O nome do usuário é pego dinamicamente */}
+				
 				<Typography variant="h3">Olá, {user?.username || ''}</Typography>
 				<Typography variant="body1">
 					Seus projetos muito mais organizados. Veja as tarefas adicionadas por seu time, por você e para você!
 				</Typography>
 			</Header>
 
-			{/* Nova seção para as tarefas recentes */}
+			
 			<RecentTasksSection>
 				<Typography variant="h5" gutterBottom>
 					Atividades recentes
@@ -99,7 +99,7 @@ const Home: React.FC = () => {
 					startIcon={<SysIcon name="check" />}
 					onClick={() => navigate('/toDos')}
 				>
-					Minhas Tarefas
+					Lista de Tarefas
 				</Button>
 			</Box>
 		</Container>
