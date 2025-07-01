@@ -59,7 +59,6 @@ const Home: React.FC = () => {
 		return (
 			<TaskList>
 				{recentToDos.map((task) => (
-					// O ListItemIcon com o Checkbox foi removido daqui
 					<TaskItem key={task._id} divider>
 						<ListItemText
                             primary={
